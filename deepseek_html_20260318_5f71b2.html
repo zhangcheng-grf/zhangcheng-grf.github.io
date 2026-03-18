@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>最简单出入库台账 · 每月结余</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        }
+        body {
+            background: #f4f7fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 20px;
+        }
+        .card {
+            background: white;
+            max-width: 1200px;
+            width: 100%;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08), 0 6px 12px rgba(0,0,0,0.05);
+            padding: 24px 28px;
+        }
+        h2 {
+            font-size: 1.9rem;
+            font-weight: 500;
+            margin: 0 0 8px 0;
+            color: #1a2639;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        h2 span {
+            background: #eef2f5;
+            font-size: 0.9rem;
+            font-weight: 400;
+            padding: 4px 12px;
+            border-radius: 40px;
+            color: #2c3e50;
+        }
+        .sub-title {
+            color: #4a5b6e;
+            margin: 0 0 25px 0;
+            border-left: 4px solid #7c9cbf;
+            padding-left: 16px;
+            font-size: 1rem;
+            background: #f8fafd;
+            border-radius: 0 8px 8px 0;
+            line-height: 1.5;
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px 20px;
+            margin-bottom: 25px;
+            align-items: flex-end;
+            justify-content: space-between;
+            background: #f8fafc;
+            padding: 16px 20px;
+            border-radius: 18px;
+        }
+        .input-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+        }
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: white;
+            padding: 5px 14px 5px 10px;
+            border-radius: 40px;
+            border: 1px solid #d9e2e9;
+        }
+        .input-row label {
+            font-weight: 500;
+            color: #2b3e4f;
+            font-size: 0.9rem;
+        }
+        .input-row input {
+            border: none;
+            padding: 8px 0 8px 8px;
+            width: 100px;
+            font-size: 0.95rem;
+            outline: none;
+            background: transparent;
+        }
+        .input-row input[type="date"] {
+            width: 140px;
+            font-family: inherit;
+        }
+        button {
+            background: #2c3e50;
+            border: none;
+            color: white;
+            font-weight: 500;
+            padding: 10px 26px;
+            border-radius: 40px;
+            font-size: 0.95rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: 0.15s;
+            border: 1px solid #1f2c38;
+            letter-spacing: 0.3px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+        button:hover {
+            background: #1f2c38;
+            transform: scale(0.98);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.04);
+        }
+        .clear-btn {
+            background: white;
+            color: #2c3e50;
+            border: 1px solid #bdc9d4;
+            box-shadow: none;
+        }
+        .clear-btn:hover {
+            background: #edf2f7;
+            border-color: #9aabb8;
+        }
+        
+        /* 表格容器 - 双表格布局 */
+        .tables-container {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 10px;
+        }
+        
+        .table-wrapper {
+            background: white;
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+        }
+        
+        .table-title {
+            background: #e6edf4;
+            padding: 12px 20px;
+            font-weight: 600;
+            color: #1f2c3a;
+            font-size: 1.1rem;
+            border-bottom: 2px solid #cbd6e3;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .table-title span {
+            background: #2c3e50;
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 10px;
+            border-radius: 30px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th {
+            background: #e6edf4;
+            color: #1f2c3a;
+            font-weight: 600;
+            font-size: 0.9rem;
+            padding: 16px 8px;
+            white-space: nowrap;
+            text-align: center;
+            border-bottom: 2px solid #cbd6e3;
+        }
+        td {
+            padding: 14px 8px;
+            text-align: center;
+            border-bottom: 1px solid #e2e9f0;
+            color: #1f2c3a;
+            font-size: 0.95rem;
+        }
+        tbody tr:hover {
+            background: #f6faff;
+        }
+        td:first-child, th:first-child { padding-left: 16px; text-align: left; }
+        td:last-child, th:last-child { padding-right: 16px; }
+
+        .stock-highlight {
+            font-weight: 600;
+            background-color: #f0f9ff;
+        }
+        
+        /* 月度汇总表格特殊样式 */
+        .monthly-table td {
+            font-weight: 500;
+        }
+        
+        .monthly-table .inflow {
+            color: #27ae60;
+        }
+        
+        .monthly-table .outflow {
+            color: #e67e22;
+        }
+        
+        .monthly-table .balance {
+            font-weight: 700;
+            color: #2980b9;
+        }
+        
+        .month-divider {
+            background: #f8fafd;
+            font-weight: 600;
+        }
+        
+        .footer-note {
+            margin-top: 22px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #4a6179;
+            font-size: 0.9rem;
+            background: #f2f6fa;
+            padding: 12px 20px;
+            border-radius: 40px;
+        }
+        .badge {
+            background: #d1e0f0;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 0.85rem;
+        }
+        hr {
+            border: none;
+            border-top: 2px dotted #cbd6e3;
+            margin: 20px 0 10px 0;
+        }
+        
+        .summary-badge {
+            display: inline-block;
+            background: #2c3e50;
+            color: white;
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2>
+        📦 最简单出入库台账
+        <span>带每月结余</span>
+    </h2>
+    <div class="sub-title">
+        ⚡ 填入日期、产品、入库/出库数量 → 点击【记录出入库】→ 自动更新结存和月度汇总
+    </div>
+
+    <!-- 输入面板 -->
+    <div class="toolbar">
+        <div class="input-group">
+            <div class="input-row">
+                <label>📅 日期</label>
+                <input type="date" id="dateInput" value="2026-03-18">
+            </div>
+            <div class="input-row">
+                <label>🏷️ 产品</label>
+                <input type="text" id="productInput" placeholder="例：中性笔" value="中性笔">
+            </div>
+            <div class="input-row">
+                <label>📥 入库</label>
+                <input type="number" id="inboundInput" value="0" min="0" step="1">
+            </div>
+            <div class="input-row">
+                <label>📤 出库</label>
+                <input type="number" id="outboundInput" value="0" min="0" step="1">
+            </div>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button id="addBtn">➕ 记录出入库</button>
+            <button id="clearBtn" class="clear-btn">🗑️ 清除台账</button>
+        </div>
+    </div>
+
+    <!-- 双表格容器 -->
+    <div class="tables-container">
+        <!-- 月度汇总表格 -->
+        <div class="table-wrapper">
+            <div class="table-title">
+                📊 每月结余汇总
+                <span>期初 → 期末</span>
+            </div>
+            <table class="monthly-table" id="monthlyTable">
+                <thead>
+                    <tr>
+                        <th>月份</th>
+                        <th>期初结存</th>
+                        <th>入库合计</th>
+                        <th>出库合计</th>
+                        <th>期末结存</th>
+                        <th>净变化</th>
+                    </tr>
+                </thead>
+                <tbody id="monthlyBody">
+                    <!-- 月度数据会动态生成在这里 -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- 明细台账表格 -->
+        <div class="table-wrapper">
+            <div class="table-title">
+                📋 出入库明细
+                <span>流水记录</span>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>日期</th>
+                        <th>产品名称</th>
+                        <th>入库数量</th>
+                        <th>出库数量</th>
+                        <th>当前结存</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <!-- 动态行会插入在这里 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- 简易状态 + 说明 -->
+    <div class="footer-note">
+        <span>✅ 台账规则：按录入顺序逐笔计算结存，按月统计汇总</span>
+        <span class="badge" id="rowCount">0 条记录</span>
+    </div>
+    <hr>
+    <div style="font-size:0.9rem; color:#4f6f8f; display:flex; gap:30px; flex-wrap:wrap;">
+        <span>📌 月度汇总说明：期初 = 上月期末，期末 = 期初 + 入库 - 出库</span>
+        <span>💡 净变化 = 入库 - 出库 (正数为净增加)</span>
+    </div>
+</div>
+
+<script>
+    (function() {
+        // ---------- 数据存储 ---------- 
+        // 每一个记录: { date, product, inbound, outbound, balance }
+        let ledger = [];
+
+        // 获取DOM元素
+        const tbody = document.getElementById('tableBody');
+        const monthlyBody = document.getElementById('monthlyBody');
+        const dateInput = document.getElementById('dateInput');
+        const productInput = document.getElementById('productInput');
+        const inboundInput = document.getElementById('inboundInput');
+        const outboundInput = document.getElementById('outboundInput');
+        const addBtn = document.getElementById('addBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const rowCountSpan = document.getElementById('rowCount');
+
+        // 辅助函数：从日期字符串提取年月 (格式: YYYY-MM)
+        function getYearMonth(dateStr) {
+            if (!dateStr) return '未知';
+            // 假设格式为 YYYY-MM-DD 或 YYYY/MM/DD
+            const parts = dateStr.split(/[-/]/);
+            if (parts.length >= 2) {
+                return `${parts[0]}-${parts[1].padStart(2, '0')}`;
+            }
+            return '未知';
+        }
+
+        // 计算月度汇总数据
+        function calculateMonthlySummary() {
+            if (ledger.length === 0) return [];
+            
+            // 按年月分组统计
+            const monthlyMap = new Map();
+            
+            // 首先，找出每个月的第一笔记录之前的结存（即上月的期末）
+            // 我们需要知道每个月的起始结存
+            
+            // 遍历所有记录，按年月汇总入库和出库
+            ledger.forEach((entry, index) => {
+                const yearMonth = getYearMonth(entry.date);
+                if (!monthlyMap.has(yearMonth)) {
+                    monthlyMap.set(yearMonth, {
+                        yearMonth: yearMonth,
+                        totalInbound: 0,
+                        totalOutbound: 0,
+                        firstEntry: entry,      // 保存该月第一条记录用于参考
+                        lastEntry: entry,        // 最后一条记录
+                        entries: []
+                    });
+                }
+                const monthData = monthlyMap.get(yearMonth);
+                monthData.totalInbound += entry.inbound;
+                monthData.totalOutbound += entry.outbound;
+                monthData.lastEntry = entry;      // 不断更新为最新一条
+                monthData.entries.push(entry);
+            });
+            
+            // 转换为数组并按年月排序
+            const monthlyArray = Array.from(monthlyMap.values())
+                .sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
+            
+            // 计算每个月的期初和期末结存
+            let previousMonthEndBalance = 0;  // 初始期初为0
+            
+            for (let i = 0; i < monthlyArray.length; i++) {
+                const month = monthlyArray[i];
+                
+                // 期初结存：如果是第一个月，为0；否则为上月期末
+                month.startBalance = (i === 0) ? 0 : monthlyArray[i-1].endBalance;
+                
+                // 期末结存 = 期初 + 当月入库 - 当月出库
+                month.endBalance = month.startBalance + month.totalInbound - month.totalOutbound;
+                
+                // 净变化
+                month.netChange = month.totalInbound - month.totalOutbound;
+            }
+            
+            return monthlyArray;
+        }
+
+        // 渲染月度汇总表格
+        function renderMonthlySummary() {
+            const monthlyData = calculateMonthlySummary();
+            
+            if (monthlyData.length === 0) {
+                monthlyBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:40px; color:#7c8f9f;">📊 暂无月度数据</td></tr>`;
+                return;
+            }
+            
+            let html = '';
+            monthlyData.forEach(month => {
+                html += `
+                    <tr>
+                        <td><strong>${month.yearMonth}</strong></td>
+                        <td>${month.startBalance}</td>
+                        <td class="inflow">+${month.totalInbound}</td>
+                        <td class="outflow">-${month.totalOutbound}</td>
+                        <td class="balance">${month.endBalance}</td>
+                        <td>${month.netChange >= 0 ? '+' : ''}${month.netChange}</td>
+                    </tr>
+                `;
+            });
+            
+            // 添加总计行
+            const totalInbound = monthlyData.reduce((sum, m) => sum + m.totalInbound, 0);
+            const totalOutbound = monthlyData.reduce((sum, m) => sum + m.totalOutbound, 0);
+            const finalBalance = monthlyData.length > 0 ? monthlyData[monthlyData.length-1].endBalance : 0;
+            
+            html += `
+                <tr style="background: #edf2f7; font-weight: 700; border-top: 2px solid #bdc9d4;">
+                    <td>📌 总计</td>
+                    <td>—</td>
+                    <td class="inflow">${totalInbound}</td>
+                    <td class="outflow">${totalOutbound}</td>
+                    <td class="balance">${finalBalance}</td>
+                    <td>${finalBalance}</td>
+                </tr>
+            `;
+            
+            monthlyBody.innerHTML = html;
+        }
+
+        // 渲染明细表格
+        function renderDetailTable() {
+            tbody.innerHTML = '';
+            if (ledger.length === 0) {
+                const emptyRow = document.createElement('tr');
+                emptyRow.innerHTML = `<td colspan="5" style="text-align:center; padding:40px; color:#7c8f9f;">📭 还没有任何记录，请填写上方信息并点击 “记录出入库”</td>`;
+                tbody.appendChild(emptyRow);
+                rowCountSpan.innerText = '0 条记录';
+                return;
+            }
+
+            // 循环构建每一行
+            ledger.forEach((entry, index) => {
+                const row = document.createElement('tr');
+                const balanceClass = 'stock-highlight';
+                const displayDate = entry.date || '—';
+
+                row.innerHTML = `
+                    <td>${displayDate}</td>
+                    <td style="font-weight:500;">${escapeHtml(entry.product) || '—'}</td>
+                    <td>${entry.inbound}</td>
+                    <td>${entry.outbound}</td>
+                    <td class="${balanceClass}">${entry.balance}</td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            rowCountSpan.innerText = ledger.length + ' 条记录';
+        }
+
+        // 统一渲染函数
+        function renderAll() {
+            renderDetailTable();
+            renderMonthlySummary();
+        }
+
+        // 极简防XSS
+        function escapeHtml(unsafe) {
+            if (!unsafe) return unsafe;
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 核心：新增一条出入库记录
+        function addEntry() {
+            // 获取并校验输入值
+            let date = dateInput.value.trim();
+            let product = productInput.value.trim();
+            let inboundRaw = inboundInput.value.trim();
+            let outboundRaw = outboundInput.value.trim();
+
+            if (date === '') {
+                const today = new Date().toISOString().slice(0,10);
+                date = today;
+                dateInput.value = today;
+            }
+            if (product === '') {
+                product = '未命名产品';
+                productInput.value = product;
+            }
+
+            let inbound = parseInt(inboundRaw, 10);
+            if (isNaN(inbound) || inbound < 0) inbound = 0;
+            let outbound = parseInt(outboundRaw, 10);
+            if (isNaN(outbound) || outbound < 0) outbound = 0;
+
+            // 计算上一笔结存
+            let lastBalance = ledger.length === 0 ? 0 : ledger[ledger.length - 1].balance;
+            let currentBalance = lastBalance + inbound - outbound;
+
+            // 创建新记录
+            const newEntry = {
+                date: date,
+                product: product,
+                inbound: inbound,
+                outbound: outbound,
+                balance: currentBalance
+            };
+
+            ledger.push(newEntry);
+            
+            // 重新渲染所有表格
+            renderAll();
+
+            // 清空数量输入
+            inboundInput.value = '0';
+            outboundInput.value = '0';
+        }
+
+        // 清除全部台账
+        function clearLedger() {
+            if (ledger.length > 0 && !confirm('确定要清除所有台账记录吗？')) {
+                return;
+            }
+            ledger = [];
+            renderAll();
+
+            dateInput.value = new Date().toISOString().slice(0,10);
+            productInput.value = '中性笔';
+            inboundInput.value = '0';
+            outboundInput.value = '0';
+        }
+
+        // 初始化演示数据
+        function initDemoEntries() {
+            if (ledger.length === 0) {
+                const today = new Date().toISOString().slice(0,10);
+                const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0,10);
+                const lastMonth = new Date(Date.now() - 30 * 86400000).toISOString().slice(0,10);
+                const nextMonth = new Date(Date.now() + 30 * 86400000).toISOString().slice(0,10);
+
+                // 上个月的数据
+                ledger.push({
+                    date: lastMonth,
+                    product: '中性笔',
+                    inbound: 100,
+                    outbound: 0,
+                    balance: 100
+                });
+                
+                ledger.push({
+                    date: lastMonth,
+                    product: '中性笔',
+                    inbound: 0,
+                    outbound: 30,
+                    balance: 70
+                });
+                
+                // 这个月的数据
+                ledger.push({
+                    date: yesterday,
+                    product: '中性笔',
+                    inbound: 50,
+                    outbound: 0,
+                    balance: 120   // 70 + 50
+                });
+                
+                ledger.push({
+                    date: today,
+                    product: '中性笔',
+                    inbound: 0,
+                    outbound: 20,
+                    balance: 100   // 120 - 20
+                });
+                
+                // 新增一个产品
+                ledger.push({
+                    date: today,
+                    product: 'A4纸',
+                    inbound: 10,
+                    outbound: 0,
+                    balance: 110   // 100 + 10
+                });
+                
+                // 下个月的数据（预告）
+                ledger.push({
+                    date: nextMonth,
+                    product: 'A4纸',
+                    inbound: 30,
+                    outbound: 0,
+                    balance: 140   // 110 + 30
+                });
+            }
+            renderAll();
+        }
+
+        // 绑定事件
+        addBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            addEntry();
+        });
+
+        clearBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            clearLedger();
+        });
+
+        // 回车快速录入
+        const inputs = [dateInput, productInput, inboundInput, outboundInput];
+        inputs.forEach(input => {
+            input.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    addEntry();
+                }
+            });
+        });
+
+        // 设置日期默认值
+        if (dateInput.value === '') {
+            dateInput.value = new Date().toISOString().slice(0,10);
+        }
+
+        // 初始化
+        initDemoEntries();
+    })();
+</script>
+</body>
+</html>
